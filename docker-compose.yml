@@ -1,21 +1,35 @@
 services:
-  mysql:
-    image: mysql:9.7
+  db:
+    image: mysql:8.0
+    container_name: petclinic-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: petclinic
+      MYSQL_USER: petclinic
+      MYSQL_PASSWORD: petclinic
     ports:
       - "3306:3306"
-    environment:
-      - MYSQL_ROOT_PASSWORD=
-      - MYSQL_ALLOW_EMPTY_PASSWORD=true
-      - MYSQL_USER=petclinic
-      - MYSQL_PASSWORD=petclinic
-      - MYSQL_DATABASE=petclinic
     volumes:
-      - "./conf.d:/etc/mysql/conf.d:ro"
-  postgres:
-    image: postgres:18.4
-    ports:
-      - "5432:5432"
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: petclinic-app
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
-      - POSTGRES_PASSWORD=petclinic
-      - POSTGRES_USER=petclinic
-      - POSTGRES_DB=petclinic
+      SPRING_PROFILES_ACTIVE: mysql
+      MYSQL_URL: jdbc:mysql://db:3306/petclinic
+      MYSQL_USER: petclinic
+      MYSQL_PASS: petclinic
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-data:

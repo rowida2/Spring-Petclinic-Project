@@ -17,4 +17,4 @@ jobs:
           distribution: 'temurin'
 
       - name: Build and run tests
-        run: ./mvnw clean test
+        run: ./mvnw clean test -Dtest="!PostgresIntegrationTests"

@@ -36,6 +36,8 @@
     <nohttp-checkstyle.version>0.0.11</nohttp-checkstyle.version>
     <spring-format.version>0.0.47</spring-format.version>
     <sonar.organization>rowida2</sonar.organization>
+    <tomcat.version>11.0.25</tomcat.version>
+    <postgresql.version>42.7.12</postgresql.version>
   </properties>
 
   <dependencies>

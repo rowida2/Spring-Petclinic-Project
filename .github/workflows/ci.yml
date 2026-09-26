@@ -73,18 +73,17 @@ jobs:
               "name": "docker-hosted",
               "online": true,
               "storage": {"blobStoreName": "default", "strictContentTypeValidation": true, "writePolicy": "allow"},
-              "docker": {"v1Enabled": false, "forceBasicAuth": true, "httpPort": 8082}
+              "docker": {"v1Enabled": false, "forceBasicAuth": false, "httpPort": 8082}
             }'
 
-      - name: Enable Docker Bearer Token Realm
+      - name: Allow anonymous Docker access
         run: |
-          curl -i -u admin:"$NEXUS_PASS" -X PUT "http://localhost:8081/service/rest/v1/security/realms/active" \
+          curl -u admin:"$NEXUS_PASS" -X PUT "http://localhost:8081/service/rest/v1/security/anonymous" \
             -H "Content-Type: application/json" \
-            -d '["NexusAuthenticatingRealm", "DockerToken"]'
-          sleep 5
+            -d '{"enabled": true, "userId": "anonymous", "realmName": "NexusAuthorizingRealm"}'
+      
 
       - name: Push image to Nexus
         run: |
           docker tag petclinic-app:${{ github.sha }} localhost:8082/petclinic-app:latest
-          echo "$NEXUS_PASS" | docker login localhost:8082 -u admin --password-stdin
           docker push localhost:8082/petclinic-app:latest

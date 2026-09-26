@@ -70,6 +70,11 @@ jobs:
               "storage": {"blobStoreName": "default", "strictContentTypeValidation": true, "writePolicy": "allow"},
               "docker": {"v1Enabled": false, "forceBasicAuth": true, "httpPort": 8082}
             }'
+      - name: Enable Docker Bearer Token Realm
+        run: |
+          curl -u admin:"$NEXUS_PASS" -X PUT "http://localhost:8081/service/rest/v1/security/realms/active" \
+            -H "Content-Type: application/json" \
+            -d '["NexusAuthenticatingRealm","NexusAuthorizingRealm","DockerToken"]'
 
       - name: Push image to Nexus
         run: |

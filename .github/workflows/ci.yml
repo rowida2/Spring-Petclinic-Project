@@ -1,5 +1,10 @@
-name: Petclininc Pipeline
-on: push
+name: Petclinic Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build-and-test:
@@ -25,12 +30,12 @@ jobs:
           distribution: 'temurin'
 
       - name: Build and run tests
-        run: ./mvnw clean test -Dtest="!PostgresIntegrationTests"
+        run: ./mvnw clean test -Dtest='!PostgresIntegrationTests'
 
       - name: SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=rowida2_Spring-Petclinic-Project -Dtest="!PostgresIntegrationTests"
+        run: ./mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=rowida2_Spring-Petclinic-Project -Dtest='!PostgresIntegrationTests'
 
       - name: Build Docker image
         run: docker build -t petclinic-app:${{ github.sha }} .
@@ -70,13 +75,16 @@ jobs:
               "storage": {"blobStoreName": "default", "strictContentTypeValidation": true, "writePolicy": "allow"},
               "docker": {"v1Enabled": false, "forceBasicAuth": true, "httpPort": 8082}
             }'
+
       - name: Enable Docker Bearer Token Realm
         run: |
           curl -i -u admin:"$NEXUS_PASS" -X PUT "http://localhost:8081/service/rest/v1/security/realms/active" \
             -H "Content-Type: application/json" \
-            -d '["NexusAuthenticatingRealm","DockerToken"]'
+            -d '["NexusAuthenticatingRealm", "DockerToken"]'
+          sleep 5
+
       - name: Push image to Nexus
         run: |
+          docker tag petclinic-app:${{ github.sha }} localhost:8082/petclinic-app:latest
           echo "$NEXUS_PASS" | docker login localhost:8082 -u admin --password-stdin
-          docker tag petclinic-app:${{ github.sha }} localhost:8082/petclinic-app:${{ github.sha }}
-          docker push localhost:8082/petclinic-app:${{ github.sha }}
+          docker push localhost:8082/petclinic-app:latest

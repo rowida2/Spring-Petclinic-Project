@@ -72,10 +72,9 @@ jobs:
             }'
       - name: Enable Docker Bearer Token Realm
         run: |
-          curl -u admin:"$NEXUS_PASS" -X PUT "http://localhost:8081/service/rest/v1/security/realms/active" \
+          curl -i -u admin:"$NEXUS_PASS" -X PUT "http://localhost:8081/service/rest/v1/security/realms/active" \
             -H "Content-Type: application/json" \
             -d '["NexusAuthenticatingRealm","NexusAuthorizingRealm","DockerToken"]'
-
       - name: Push image to Nexus
         run: |
           echo "$NEXUS_PASS" | docker login localhost:8082 -u admin --password-stdin

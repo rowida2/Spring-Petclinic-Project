@@ -64,6 +64,12 @@ jobs:
           NEXUS_PASS=$(docker exec "$NEXUS_CONTAINER" cat /nexus-data/admin.password)
           echo "::add-mask::$NEXUS_PASS"
           echo "NEXUS_PASS=$NEXUS_PASS" >> "$GITHUB_ENV"
+          
+      - name: Accept Nexus EULA
+        run: |
+          curl -u admin:"$NEXUS_PASS" -X POST "http://localhost:8081/service/rest/v1/system/eula" \
+            -H "Content-Type: application/json" \
+            -d '{"accepted": true}'
 
       - name: Create Docker hosted repository in Nexus
         run: |

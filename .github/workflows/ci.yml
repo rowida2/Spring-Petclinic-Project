@@ -16,6 +16,7 @@ jobs:
         ports:
           - 8081:8081
           - 8082:8082
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -59,12 +60,10 @@ jobs:
 
       - name: Get Nexus admin password
         run: |
-          NEXUS_CONTAINER=$(docker ps -qf "ancestor=sonatype/nexus3")
+          NEXUS_CONTAINER=$(docker ps -qf "ancestor=sonatype/nexus3:3.70.1")
           NEXUS_PASS=$(docker exec "$NEXUS_CONTAINER" cat /nexus-data/admin.password)
           echo "::add-mask::$NEXUS_PASS"
           echo "NEXUS_PASS=$NEXUS_PASS" >> "$GITHUB_ENV"
-
-      
 
       - name: Create Docker hosted repository in Nexus
         run: |
@@ -77,8 +76,15 @@ jobs:
               "docker": {"v1Enabled": false, "forceBasicAuth": true, "httpPort": 8082}
             }'
 
+      - name: Enable Docker Bearer Token Realm
+        run: |
+          curl -i -u admin:"$NEXUS_PASS" -X PUT "http://localhost:8081/service/rest/v1/security/realms/active" \
+            -H "Content-Type: application/json" \
+            -d '["NexusAuthenticatingRealm", "DockerToken"]'
+
       - name: Verify Nexus credentials before pushing
         run: |
+          sleep 5
           curl -v -u admin:"$NEXUS_PASS" http://localhost:8082/v2/ 2>&1 | tail -30
 
       - name: Push image to Nexus
